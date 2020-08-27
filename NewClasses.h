@@ -1,155 +1,79 @@
 #ifndef NEWCLASSES_H
 #define NEWCLASSES_H
-/*
-1) Классы: 	abstract Processor(Clock, value, virtual calcValue), 
-			Computer(coefficient, PC_mark, virtual calcValue), 
-			ComputerWithMonitor(monitor_mark, monitor_value, diagonal, calcValue)
-
-2) in main creat: Monitor* list = new Monitor[5]; + заполнить список вручную
-3) list[1].getName()
-4) Список инициализации, глубокое копирование, деструктор, методы
-5) Перегрузить: ввод\вывод, присваивания, + & - на число
-*/
 
 #include <iostream>
-#include <cassert>
-#include <cstring>
+//#include <cstring>
 
 using std::ostream;
 using std::istream;
-using std::cout;
-using std::cin;
-using std::endl;
 
 class  Processor
 {
 private:
-	double clock;
-	double value;
+	char* m_name;
+	double m_clock;
+	double m_value;
 
 public:
-	//Список инициализации
-	explicit Processor(double _clock, double _val) : clock( _clock ), value(_val)
-    {}
-    Processor(){}
-    ~Processor(){}
+	// Конструктор
+	Processor(const char* _n = "undefined", double _c = 0., double _val = 0.);
+	
+	// Глубокое копирование
+	Processor(const Processor& src);
 
-	//Глубокое копирование
-	Processor(const Processor& source);
+	// Присваивание
+	Processor& operator = (const Processor& src);
 
-	//Присваивание
-	Processor& operator = (const Processor& source);
+	// Деструктор
+	virtual ~Processor();
 
 	//Ввод\вывод через >>\<<	
-	friend ostream& operator << (ostream& out, Processor &_s);
-	friend istream& operator >> (istream &in, Processor &_s);
+	friend ostream& operator << (ostream& out, const Processor &_s);
+	friend istream& operator >> (istream& in, Processor &_s);
 
-	virtual void calcValue() = 0;
+	virtual /*double*/ void calcValue();
 
-	void setValue(double _v){ value = _v;}
-	double getValue(){ return value;}
-	double getClock() { return clock; }
+	void setValue(double _v)
+	{ m_value = _v; }
+	double getValue() const
+	{ return m_value; }
+	double getClock() const 
+	{ return m_clock; }
 
 };
 
 class Computer : public Processor
 {
 private:
-	int coefficient;
 	char* PC_mark;
-	int PC_mark_len;
+	int coefficient;
 
 public:
+	// Конструкторы
+	Computer (const char* _mark = "undefined", int _coef = 0, 
+			  const char* _name = "undefined", double _c = 0., double _val = 0.);
+	Computer (const char* _mark, int _coef, const Processor& _src);
+	//Глубокое копирование
+	Computer(const Computer& src);
 
-	int getCoefficient() { return coefficient; }
-	char* getPC_mark() { return PC_mark; }
-	virtual void calcValue ()
+	//Присваивание
+	Computer& operator = (const Computer& src);
+
+	//Ввод\вывод через >>\<<
+	friend ostream& operator << (ostream& out, const Computer &_s);
+	friend istream& operator >> (istream &in, Computer &_s);
+
+	~Computer();
+	// + & - на число
+	/*Computer*/void operator + (double _value) { setValue(getValue() + _value); }
+	/*Computer*/void operator - (double _value) { setValue(getValue() - _value); }
+
+	virtual /*double*/ void calcValue ()
 	{
 		setValue(coefficient*getClock());
 	}
-	Computer(){}
-	//Список инициализации
-	Computer (int _coef, const char* _mark, double _clock, double _val) : Processor(_clock, _val), coefficient(_coef)
-	{
-		assert(_mark);
-
-		PC_mark_len = strlen(_mark)+1;
-		PC_mark = new char[PC_mark_len];
-		
-		for (int i = 0; i < PC_mark_len; ++i)
-			PC_mark[i] = _mark[i];
-
-		PC_mark[PC_mark_len] = '\0';
-
-		calcValue();
-	}
-
-	//Глубокое копирование
-	Computer(const Computer& source);
-
-	//Присваивание
-	Computer& operator = (const Computer& source);
-
-	// + & - на число
-	void operator + (double _value) { setValue(getValue() + _value); }
-	void operator - (double _value) { setValue(getValue() - _value); }
-
-	//Ввод\вывод через >>\<<
-	friend ostream& operator << (ostream& out, Computer &_s);
-	friend istream& operator >> (istream &in, Computer &_s);
-
-	~Computer(){ 
-		delete[] PC_mark;
-	}
+	int getCoefficient() const { return coefficient; }
+	char* getPC_mark() const { return PC_mark; }
 };
 
-class ComputerWithMonitor : public Computer
-{
-private:
-	char* monitor_mark;
-	int m_mark_len;
-	int monitor_value;
-	double diagonal;
-
-public:
-	//Список инициализации
-	ComputerWithMonitor (char* m_mark, int m_value, double _diag, int _coef, const char* pc_mark, double _clock, double _val) 
-	: Computer(_coef, pc_mark, _clock, _val), monitor_mark(m_mark), monitor_value(m_value), diagonal(_diag)
-	{
-		assert(m_mark);
-
-		m_mark_len = strlen(m_mark)+1;
-		monitor_mark = new char[m_mark_len];
-		
-		for (int i = 0; i < m_mark_len; ++i)
-			monitor_mark[i] = m_mark[i];
-
-		monitor_mark[m_mark_len] = '\0';
-
-		calcValue();
-	}
-
-	//Глубокое копирование
-	ComputerWithMonitor(const ComputerWithMonitor& source);
-
-	//Присваивание
-	ComputerWithMonitor& operator = (const ComputerWithMonitor& source);
-
-	//Ввод\вывод через >>\<<
-	friend ostream& operator << (ostream& out, ComputerWithMonitor &_s);
-	friend istream& operator >> (istream &in, ComputerWithMonitor &_s);
-
-	// + & - на число
-	void operator + (double _value) { setValue(getValue() + _value); }
-	void operator - (double _value) { setValue(getValue() - _value); }
-
-	~ComputerWithMonitor(){ 
-		delete[] monitor_mark;
-	}
-
-	virtual void calcValue ()
-	{
-		setValue(getCoefficient() * getClock() + monitor_value);
-	}
-};
 #endif

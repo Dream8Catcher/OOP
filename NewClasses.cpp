@@ -1,17 +1,5 @@
-/*
-1) Классы: 	abstract Processor(Clock, value, virtual calcValue), 
-			Computer(coefficient, PC_mark, virtual calcValue), 
-			ComputerWithMonitor(monitor_mark, monitor_value, diagonal, calcValue)
-
-2) in main creat: Monitor* list = new Monitor[5]; + заполнить список вручную
-3) list[1].getName()
-4) Список инициализации, глубокое копирование, деструктор, методы
-5) Перегрузить: ввод\вывод, присваивания, + & - на число
-*/
-
 #include "newclasses.h"
 #include <iostream>
-#include <cassert>
 #include <cstring>
 
 using std::ostream;
@@ -21,145 +9,191 @@ using std::cin;
 using std::endl;
 
 /******************Processor******************/
-// Глубокое копирование
-Processor::Processor(const Processor& source)
+// Конструктор
+Processor::Processor(const char* _n, double _c, double _val) : m_clock(_c), m_value(_val)
 {
-	clock = source.clock;
-	value = source.value;	
+	m_name = new char[std::strlen(_n)+1];
+	std::strcpy(m_name, _n);
+}
+
+// Глубокое копирование
+Processor::Processor(const Processor& src)
+{
+	m_name = new char[std::strlen(src.m_name)+1];
+	std::strcpy(m_name, src.m_name);
+
+	m_clock = src.m_clock;
+	m_value = src.m_value;	
 }
 
 // Присваивание
-Processor& Processor::operator = (const Processor& source)
+Processor& Processor::operator = (const Processor& src)
 {
-	if (this == &source) return *this;
-	clock = source.clock;
-	value = source.value;
+	if (this == &src) return *this;
+	delete [] m_name;
+	if (src.m_name)
+	{
+		m_name = new char[std::strlen(src.m_name)+1];
+		std::strcpy(m_name, src.m_name);	
+	}
+	m_clock = src.m_clock;
+	m_value = src.m_value;
 	return *this;
 }
 
-// Ввод\вывод через >>\<<
-ostream& operator << (ostream& out, Processor & _s)
+// Деструктор
+Processor::~Processor()
 {
-	out << "clock: " << _s.getClock() << "\tvalue: " << _s.getValue() << endl;
+	delete [] m_name;
+}
+
+// Ввод\вывод через >>\<<
+ostream& operator << (ostream& out, const Processor & _s)
+{
+	out << "m_clock: " << _s.m_clock << "\tvalue: " << _s.m_value << endl;
 	return out;
 }
 
 istream& operator >> (istream &in, Processor &_s)
 {
-	in >> _s.clock;
-	in >> _s.value;
+	//cout << "Name is: "; in.getline(in, _s.m_name);
+	cout << "\nClock is: "; in >> _s.m_clock;
+	cout << "\nValue is: "; in >> _s.m_value;
 	return in;
 }
 
-/******************Computer******************/
-// Глубокое копирование
-Computer::Computer(const Computer& source)
+/*double*/ 
+void Processor::calcValue()
 {
-	coefficient = source.coefficient;
-	PC_mark_len = source.PC_mark_len;
-	//clock = source.clock;
-	//value = source.value;
+	setValue(m_value / m_clock);
+	//return (m_value / m_clock);
+}
 
-	if (source.PC_mark)
+/******************Computer******************/
+// Конструкторы
+Computer::Computer (const char* _mark, int _coef, 
+			  		const char* _name, double _c, double _val) 
+			  			: Processor(_name, _c, _val), coefficient(_coef)
 	{
-		PC_mark = new char[PC_mark_len];
-		
-		for (int i = 0; i < PC_mark_len; ++i)
-			PC_mark[i]=source.PC_mark[i];
+		if (_mark){
+			PC_mark = new char[strlen(_mark)+1];
+			std::strcpy(PC_mark, _mark);
+		}
+		else
+			PC_mark = nullptr;
+		calcValue();
 	}
-	else	PC_mark = NULL;
+Computer::Computer (const char* _mark, int _coef, const Processor& _src) 
+					: Processor(_src), coefficient(_coef)
+{
+	if (_mark){
+		PC_mark = new char[strlen(_mark)+1];
+		std::strcpy(PC_mark, _mark);
+	}
+	else
+		PC_mark = nullptr;
+	calcValue();
+}
+// Глубокое копирование
+Computer::Computer(const Computer& src) : Processor(src), coefficient(src.coefficient)
+{
+	if (src.PC_mark)
+	{
+		PC_mark = new char[strlen(src.PC_mark+1)];
+		std::strcpy(PC_mark, src.PC_mark);
+	}
+	else 
+		PC_mark = nullptr;
 }
 
 // Присваивание
-Computer& Computer::operator = (const Computer& source)
+Computer& Computer::operator = (const Computer& src)
 {
-	if (this == &source) return *this;
+	if (&src == this) return *this;
+	Processor::operator=(src);
 	delete [] PC_mark;
-
-	coefficient = source.coefficient;
-	PC_mark_len = source.PC_mark_len;
-
-	if (source.PC_mark)
-	{
-		PC_mark = new char[PC_mark_len];
-		
-		for (int i = 0; i < PC_mark_len; ++i)
-			PC_mark[i]=source.PC_mark[i];
-	}
-	else	PC_mark = NULL;
-
+	PC_mark = new char[strlen(src.PC_mark+1)];
+	std::strcpy(PC_mark, src.PC_mark);
 	return *this;
 }
 
 // Ввод\вывод через >>\<<
-ostream& operator << (ostream& out, Computer & _s)
+ostream& operator << (ostream& out, const Computer & _s)
 {
-	out << "clock: " << _s.getClock() << "\tvalue: " << _s.getValue() << endl;
-	out << "coefficient: " << _s.getCoefficient() << "\nPC mark: " << _s.getPC_mark() << endl;
+	out << (const Processor&) _s;
+	out << "\nPC_mark: " << _s.PC_mark << "\nCoefficient: " << _s.coefficient << endl;
+
 	return out;
 }
 
 istream& operator >> (istream &in, Computer &_s)
 {
-	//in >> _s.clock;
-	//in >> _s.value;
+	in >> (Processor&) _s;
+	cout << "PC_mark is: "; //in.getline(in, *(_s.PC_mark), in.widen('\n'));
+	cout << "\nCoefficient is: "; 
 	in >> _s.coefficient;
-	in >> _s.PC_mark;
+
 	return in;
+}
+
+Computer::~Computer()
+{
+	delete [] PC_mark;
 }
 
 /******************ComputerWithMonitor******************/
 // Глубокое копирование
-ComputerWithMonitor::ComputerWithMonitor(const ComputerWithMonitor& source)
-{
-	m_mark_len = source.m_mark_len;
+// ComputerWithMonitor::ComputerWithMonitor(const ComputerWithMonitor& src)
+// {
+// 	m_mark_len = src.m_mark_len;
 
-	if (source.monitor_mark)
-	{
-		monitor_mark = new char[m_mark_len];
+// 	if (src.monitor_mark)
+// 	{
+// 		monitor_mark = new char[m_mark_len];
 		
-		for (int i = 0; i < m_mark_len; ++i)
-			monitor_mark[i]=source.monitor_mark[i];
-	}
-	else	{
-		monitor_mark = NULL;
-	}
-}
+// 		for (int i = 0; i < m_mark_len; ++i)
+// 			monitor_mark[i]=src.monitor_mark[i];
+// 	}
+// 	else	{
+// 		monitor_mark = NULL;
+// 	}
+// }
 
-//Присваивание
-ComputerWithMonitor& ComputerWithMonitor::operator = (const ComputerWithMonitor& source)
-{
-	if (this == &source) return *this;
-	delete [] monitor_mark;
+// //Присваивание
+// ComputerWithMonitor& ComputerWithMonitor::operator = (const ComputerWithMonitor& src)
+// {
+// 	if (this == &src) return *this;
+// 	delete [] monitor_mark;
 
-	monitor_value = source.monitor_value;
-	diagonal = source.diagonal;
-	m_mark_len = source.m_mark_len;
+// 	monitor_value = src.monitor_value;
+// 	diagonal = src.diagonal;
+// 	m_mark_len = src.m_mark_len;
 
-	if (source.monitor_mark)
-	{
-		monitor_mark = new char[m_mark_len];
+// 	if (src.monitor_mark)
+// 	{
+// 		monitor_mark = new char[m_mark_len];
 		
-		for (int i = 0; i < m_mark_len; ++i)
-			monitor_mark[i] = source.monitor_mark[i];
-	}
-	else	monitor_mark = NULL;
+// 		for (int i = 0; i < m_mark_len; ++i)
+// 			monitor_mark[i] = src.monitor_mark[i];
+// 	}
+// 	else	monitor_mark = NULL;
 
-	return *this;
-}
+// 	return *this;
+// }
 
-// Ввод\вывод через >>\<<
-ostream& operator << (ostream& out, ComputerWithMonitor & _s)
-{
-	out << "clock: " << _s.getClock() << "\tvalue: " << _s.getValue() << endl;
-	out << "coefficient: " << _s.getCoefficient() << "\nPC mark: " << _s.getPC_mark() << endl;
-	return out;
-}
+// // Ввод\вывод через >>\<<
+// ostream& operator << (ostream& out, ComputerWithMonitor & _s)
+// {
+// 	// out << (Computer &) _s;
+// 	out << "m_clock: " << _s.getClock() << "\tvalue: " << _s.getValue() << endl;
+// 	out << "coefficient: " << _s.getCoefficient() << "\nPC mark: " << _s.getPC_mark() << endl;
+// 	return out;
+// }
 
-istream& operator >> (istream &in, ComputerWithMonitor &_s)
-{
-	in >> _s.monitor_mark;
-	in >> _s.monitor_value;
-	in >> _s.diagonal;
-	return in;
-}
+// istream& operator >> (istream &in, ComputerWithMonitor &_s)
+// {
+// 	in >> _s.monitor_mark;
+// 	in >> _s.monitor_value;
+// 	in >> _s.diagonal;
+// 	return in;
+// }

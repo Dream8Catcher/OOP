@@ -14,14 +14,5 @@
 #include "NewClasses.h"
 
 int main(){
-	const char* mark = "SyncMaster";
-	int coeff = 5;
-	double clock = 1.4;
-	double value = 14.0;
-	Computer comp = Computer(coeff, mark, clock, value);
-	cout << "value before: " << comp.getValue() << endl;
-	comp + 6;
-	cout <<  "value after: " << comp.getValue();
-	cout << comp << endl;
-	return 0;
+
 }
